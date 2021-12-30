@@ -1,0 +1,20 @@
+{% extends 'encyclopedia/layout.html' %}
+{% load markdownify %}
+
+{% block title %}
+    {% if entry %}
+        {{ title }}
+    {% else %}
+        Oops!..
+    {% endif %}
+{% endblock %}
+
+{% block body %}
+    {% if entry %}
+        {{ entry|markdownify }}
+        <br><br>
+        <a href="{% url 'edit' title=title%}"><button type="submit" class="btn btn-primary">Edit</button></a>
+    {% else %}
+        The requested page wasn't found.
+    {% endif %}
+{% endblock %}
