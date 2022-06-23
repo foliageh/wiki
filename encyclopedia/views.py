@@ -1,9 +1,10 @@
 from django.shortcuts import render
 from . import util
 from django import forms
-# from django.http import HttpResponseRedirect
-# from django.urls import reverse
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 from random import randint
+
 
 def check_new(value):
     title = value.lower().strip().replace('  ', ' ')
@@ -25,7 +26,7 @@ class TitlePageForm(forms.Form):
 class ContentPageForm(forms.Form):
     content = forms.CharField(label='', 
                               widget=forms.Textarea(attrs={
-                                  'placeholder': 'Enter content'}))
+                                  'placeholder': 'Enter content', 'style': 'height: auto', 'rows': '20'}))
 
 
 def index(request):
@@ -46,8 +47,7 @@ def search(request):
     if form.is_valid():
         query = form.cleaned_data['query'].lower().strip().replace('  ', ' ')
         if any(query == entry.lower() for entry in util.list_entries()):
-            return entry(request, query)
-            # return HttpResponseRedirect(reverse('entry', kwargs={'title': query}))
+            return HttpResponseRedirect(reverse('entry', kwargs={'title': query}))
         else:
             return render(request, 'encyclopedia/search.html', {
                 'search_results': filter(lambda s: query in s.lower(), util.list_entries()),
@@ -55,13 +55,12 @@ def search(request):
                 'search_form': SearchForm()
             })
     else:
-        return index(request)
+        return HttpResponseRedirect(reverse('index'))
 
 def random_entry(request):
     entries = util.list_entries()
     title = entries[randint(0, len(entries)-1)]
-    return entry(request, title)
-    # return HttpResponseRedirect(reverse('entry', kwargs={'title': title}))
+    return HttpResponseRedirect(reverse('entry', kwargs={'title': title}))
 
 def new_page(request):
     if request.method == 'POST':
@@ -72,7 +71,7 @@ def new_page(request):
             title = title_form.cleaned_data['title'].strip().replace('  ', ' ')
             content = content_form.cleaned_data['content']
             util.save_entry(title, '#' + title + '\n\n' + content)
-            return entry(request, title)
+            return HttpResponseRedirect(reverse('entry', kwargs={'title': title}))
         else:
             return render(request, 'encyclopedia/new_page.html', {
                 'new_title': title_form,
@@ -91,9 +90,9 @@ def edit_page(request, title):
         content_form = ContentPageForm(request.POST)
 
         if content_form.is_valid():
-            content = content_form.cleaned_data['content']
+            content = content_form.cleaned_data['content'].replace('\n', '')
             util.save_entry(title, content)
-            return entry(request, title)
+            return HttpResponseRedirect(reverse('entry', kwargs={'title': title}))
         else:
             return render(request, 'encyclopedia/edit_page.html', {
                 'title': title,
